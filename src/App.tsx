@@ -11,6 +11,7 @@ import {
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Media } from '@capacitor-community/media';
 import { Capacitor } from '@capacitor/core';
+import { Camera as NativeCamera } from '@capacitor/camera';
 
 const QR_TYPES = [
   { id: "link", label: "Link", icon: Link2 },
@@ -192,19 +193,27 @@ export default function App() {
 
   const handleGrantPermissions = async () => {
     try {
-      // Request camera permission if available
-      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        // Stop the tracks immediately so the camera light doesn't stay on
-        stream.getTracks().forEach(track => track.stop());
+      if (Capacitor.isNativePlatform()) {
+        // Request Native Permissions using Capacitor
+        await NativeCamera.requestPermissions();
+        try {
+          await Filesystem.requestPermissions();
+        } catch (e) {
+          console.warn("Storage permission request failed:", e);
+        }
+      } else {
+        // Web Fallback
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+          const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+          stream.getTracks().forEach(track => track.stop());
+        }
       }
 
       localStorage.setItem("nazu_permissions_granted", "true");
       setShowPermissionModal(false);
     } catch (err) {
-      // If permission is denied or hardware is missing, we still proceed
-      // but we use a warning instead of an error to avoid cluttering the console
-      console.warn("Camera permission could not be obtained:", err);
+      console.warn("Permission could not be obtained:", err);
+      // We still close the modal to not block the user, though native dialog might have appeared
       localStorage.setItem("nazu_permissions_granted", "true");
       setShowPermissionModal(false);
     }
@@ -306,8 +315,15 @@ export default function App() {
     <div className={`min-h-screen font-sans transition-colors duration-300 ${isDarkMode ? 'bg-zinc-950 text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
       {/* Permission Modal */}
       {showPermissionModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className={`max-w-md w-full rounded-3xl shadow-2xl p-8 animate-in zoom-in-95 duration-300 ${isDarkMode ? 'bg-slate-900 border border-slate-800' : 'bg-white'}`}>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
+          <div className={`relative max-w-md w-full rounded-3xl shadow-2xl p-8 animate-in zoom-in-95 duration-300 ${isDarkMode ? 'bg-zinc-900 border border-zinc-800' : 'bg-white'}`}>
+            <button
+              onClick={() => setShowPermissionModal(false)}
+              className="absolute top-4 right-4 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
+            >
+              <X size={20} className={isDarkMode ? 'text-zinc-500' : 'text-slate-400'} />
+            </button>
+
             <div className="flex justify-center mb-6">
               <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center">
                 <ShieldCheck size={40} className="text-emerald-500" />
@@ -318,57 +334,51 @@ export default function App() {
               Permissions Required
             </h2>
 
-            <p className={`text-center mb-8 ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+            <p className={`text-center mb-8 ${isDarkMode ? 'text-zinc-400' : 'text-slate-600'}`}>
               To provide the best experience, Nazu QR Scanner needs access to the following:
             </p>
 
             <div className="space-y-4 mb-8">
-              <div className={`flex items-start gap-4 p-4 rounded-2xl ${isDarkMode ? 'bg-slate-800/50' : 'bg-slate-50'}`}>
+              <div className={`flex items-start gap-4 p-4 rounded-2xl ${isDarkMode ? 'bg-zinc-800/50' : 'bg-slate-50'}`}>
                 <div className="mt-1 text-emerald-500">
                   <Camera size={20} />
                 </div>
                 <div>
-                  <h3 className={`font-semibold text-sm ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>Camera Access</h3>
-                  <p className={`text-xs ${isDarkMode ? 'text-slate-500' : 'text-slate-500'}`}>Required for scanning QR codes directly from your camera.</p>
+                  <h3 className={`font-semibold text-sm ${isDarkMode ? 'text-zinc-200' : 'text-slate-800'}`}>Camera Access</h3>
+                  <p className={`text-xs ${isDarkMode ? 'text-zinc-500' : 'text-slate-500'}`}>Required for scanning QR codes directly from your camera.</p>
                 </div>
               </div>
 
-              <div className={`flex items-start gap-4 p-4 rounded-2xl ${isDarkMode ? 'bg-slate-800/50' : 'bg-slate-50'}`}>
+              <div className={`flex items-start gap-4 p-4 rounded-2xl ${isDarkMode ? 'bg-zinc-800/50' : 'bg-slate-50'}`}>
                 <div className="mt-1 text-emerald-500">
                   <HardDrive size={20} />
                 </div>
                 <div>
-                  <h3 className={`font-semibold text-sm ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>Storage Access</h3>
-                  <p className={`text-xs ${isDarkMode ? 'text-slate-500' : 'text-slate-500'}`}>Required to save and download your generated QR codes to your device.</p>
+                  <h3 className={`font-semibold text-sm ${isDarkMode ? 'text-zinc-200' : 'text-slate-800'}`}>Storage Access</h3>
+                  <p className={`text-xs ${isDarkMode ? 'text-zinc-500' : 'text-slate-500'}`}>Required to save and download your generated QR codes to your device.</p>
                 </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-3">
-              {(["png", "jpg", "pdf"] as const).map((fmt) => (
-                <button
-                  key={fmt}
-                  onClick={() => setDownloadFormat(fmt)}
-                  className={`py-2 px-3 rounded-xl border text-xs font-bold transition-all ${downloadFormat === fmt
-                    ? "bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/20"
-                    : isDarkMode
-                      ? "bg-slate-800 border-slate-700 text-slate-300 hover:border-slate-500"
-                      : "bg-slate-50 border-slate-200 text-slate-600 hover:border-slate-300"
-                    }`}
-                >
-                  {fmt.toUpperCase()}
-                </button>
-              ))}
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={handleGrantPermissions}
+                className="w-full py-4 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-2xl flex items-center justify-center gap-2 transition-all transform active:scale-[0.98] shadow-lg shadow-emerald-500/30"
+              >
+                Allow Permissions
+              </button>
+              <button
+                onClick={() => {
+                  localStorage.setItem("nazu_permissions_granted", "true");
+                  setShowPermissionModal(false);
+                }}
+                className={`w-full py-3 text-sm font-medium transition-colors ${isDarkMode ? 'text-zinc-500 hover:text-zinc-300' : 'text-slate-500 hover:text-slate-700'}`}
+              >
+                Skip for now
+              </button>
             </div>
 
-            <button
-              onClick={handleDownload}
-              className="w-full py-4 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-2xl flex items-center justify-center gap-2 transition-all transform active:scale-[0.98] shadow-lg shadow-emerald-500/20 group"
-            >
-              <Download size={20} className="group-hover:bounce" />
-              Download Ultra-HD {downloadFormat.toUpperCase()}
-            </button>
-            <p className="text-[10px] text-center mt-4 text-slate-500 uppercase tracking-widest font-medium">
+            <p className="text-[10px] text-center mt-6 text-slate-500 uppercase tracking-widest font-medium">
               Your privacy is our priority
             </p>
           </div>
@@ -1823,15 +1833,32 @@ export default function App() {
               </div>
             </div>
 
+            <div className="grid grid-cols-3 gap-3 mb-4 w-full">
+              {(["png", "jpg", "pdf"] as const).map((fmt) => (
+                <button
+                  key={fmt}
+                  onClick={() => setDownloadFormat(fmt)}
+                  className={`py-2 px-3 rounded-xl border text-xs font-bold transition-all ${downloadFormat === fmt
+                    ? "bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/20"
+                    : isDarkMode
+                      ? "bg-zinc-800 border-zinc-700 text-zinc-300 hover:border-zinc-500"
+                      : "bg-slate-50 border-slate-200 text-slate-600 hover:border-slate-300"
+                    }`}
+                >
+                  {fmt.toUpperCase()}
+                </button>
+              ))}
+            </div>
+
             <button
               onClick={handleDownload}
-              className="w-full bg-emerald-500 text-white py-3.5 rounded-xl font-semibold hover:bg-emerald-600 transition-colors flex items-center justify-center gap-2 shadow-sm hover:shadow"
+              className="w-full bg-emerald-500 text-white py-4 rounded-2xl font-bold hover:bg-emerald-600 transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 transform active:scale-[0.98]"
             >
               <Download size={20} />
-              Download QR Code
+              Download Ultra-HD {downloadFormat.toUpperCase()}
             </button>
             <p className="text-xs text-slate-500 mt-4 text-center">
-              High quality PNG format. No signup required.
+              Professional {downloadFormat.toUpperCase()} format. No signup required.
             </p>
           </div>
         </div >

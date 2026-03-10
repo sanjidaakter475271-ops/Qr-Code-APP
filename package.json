@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@capacitor-community/media": "^9.0.2",
+    "@capacitor/camera": "^8.0.2",
     "@capacitor/core": "^8.2.0",
     "@capacitor/filesystem": "^8.1.2",
     "@google/genai": "^1.29.0",
