@@ -235,28 +235,36 @@ export default function App() {
   const handleGrantPermissions = async () => {
     try {
       if (Capacitor.isNativePlatform()) {
-        // First check current status
+        // Step 1: Request Storage/Media permissions FIRST
+        try {
+          // For Android 12 and below, we need READ/WRITE storage
+          // For Android 13+, Media plugin handles it internally
+          // We request via Media plugin to cover all Android versions
+          await Media.getAlbums(); // Triggers storage permission prompt on older Android
+        } catch (storageErr) {
+          console.warn("Storage permission request step:", storageErr);
+          // Non-fatal — continue to camera
+        }
+
+        // Step 2: Check camera permission status
         const currentStatus = await NativeCamera.checkPermissions();
 
         if (currentStatus.camera === 'denied') {
-          alert("Permission was previously denied. Please enable Camera access in your phone settings to use the scanner.");
-          // We mark as granted in LS even if denied to close the persistent modal, 
-          // allowing the user to use the generator even without scanning.
+          alert("Camera permission was previously denied. Please enable Camera access in your phone settings to use the scanner.");
+          // Mark granted to close modal — user can still generate QR codes
           localStorage.setItem("nazu_permissions_granted", "true");
           setShowPermissionModal(false);
           return;
         }
 
-        // Request Camera Permissions
+        // Request Camera permissions SECOND
         const cameraStatus = await NativeCamera.requestPermissions();
         if (cameraStatus.camera !== 'granted') {
           alert("Camera permission is required for scanning. You can still generate QR codes!");
         }
 
-        // NOTE: Media plugin v7+ does not require explicit storage permissions 
-        // for saving to app-scoped albums on Android 13+.
       } else {
-        // Web Fallback
+        // Web Fallback — camera covers getUserMedia
         if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
           const stream = await navigator.mediaDevices.getUserMedia({ video: true });
           stream.getTracks().forEach(track => track.stop());
@@ -435,16 +443,7 @@ export default function App() {
             </p>
 
             <div className="space-y-4 mb-8">
-              <div className={`flex items-start gap-4 p-4 rounded-2xl ${isDarkMode ? 'bg-zinc-800/50' : 'bg-slate-50'}`}>
-                <div className="mt-1 text-emerald-500">
-                  <Camera size={20} />
-                </div>
-                <div>
-                  <h3 className={`font-semibold text-sm ${isDarkMode ? 'text-zinc-200' : 'text-slate-800'}`}>Camera Access</h3>
-                  <p className={`text-xs ${isDarkMode ? 'text-zinc-500' : 'text-slate-500'}`}>Required for scanning QR codes directly from your camera.</p>
-                </div>
-              </div>
-
+              {/* Storage FIRST */}
               <div className={`flex items-start gap-4 p-4 rounded-2xl ${isDarkMode ? 'bg-zinc-800/50' : 'bg-slate-50'}`}>
                 <div className="mt-1 text-emerald-500">
                   <HardDrive size={20} />
@@ -452,6 +451,17 @@ export default function App() {
                 <div>
                   <h3 className={`font-semibold text-sm ${isDarkMode ? 'text-zinc-200' : 'text-slate-800'}`}>Storage Access</h3>
                   <p className={`text-xs ${isDarkMode ? 'text-zinc-500' : 'text-slate-500'}`}>Required to save and download your generated QR codes to your device.</p>
+                </div>
+              </div>
+
+              {/* Camera SECOND */}
+              <div className={`flex items-start gap-4 p-4 rounded-2xl ${isDarkMode ? 'bg-zinc-800/50' : 'bg-slate-50'}`}>
+                <div className="mt-1 text-emerald-500">
+                  <Camera size={20} />
+                </div>
+                <div>
+                  <h3 className={`font-semibold text-sm ${isDarkMode ? 'text-zinc-200' : 'text-slate-800'}`}>Camera Access</h3>
+                  <p className={`text-xs ${isDarkMode ? 'text-zinc-500' : 'text-slate-500'}`}>Required for scanning QR codes directly from your camera.</p>
                 </div>
               </div>
             </div>
