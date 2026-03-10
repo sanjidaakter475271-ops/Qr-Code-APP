@@ -5,8 +5,9 @@ import ColorPicker from "./components/ColorPicker";
 import type { DotType, CornerSquareType, CornerDotType } from "qr-code-styling";
 import {
   Link2, AlignLeft, Mail, Phone, MessageSquare, Contact,
-  MessageCircle, Wifi, FileText, Download, Scan, Moon, Sun,
-  Upload, X, Image as ImageIcon, Camera, ShieldCheck, HardDrive, QrCode
+  MessageCircle, Wifi, FileText, Download, Scan, Moon, Sun, Settings,
+  Upload, X, Image as ImageIcon, Camera, ShieldCheck, HardDrive, QrCode,
+  Folder, Info, Heart
 } from "lucide-react";
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Media } from '@capacitor-community/media';
@@ -181,8 +182,10 @@ export default function App() {
   const [logoMargin, setLogoMargin] = useState(10);
   const [downloadFormat, setDownloadFormat] = useState<"png" | "jpg" | "pdf">("png");
 
-  // Permission state
+  // Permission & Settings state
   const [showPermissionModal, setShowPermissionModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [saveToFolder, setSaveToFolder] = useState(() => localStorage.getItem("nazu_qr_save_folder") || "Gallery");
 
   useEffect(() => {
     const permissionsGranted = localStorage.getItem("nazu_permissions_granted");
@@ -247,28 +250,17 @@ export default function App() {
       // Ultra high-resolution scale (4x)
       const scale = 4;
       const canvas = await html2canvas(qrRef.current, {
-        backgroundColor: downloadFormat === "jpg" ? "#ffffff" : null,
+        backgroundColor: "#ffffff", // Always white background for the actual save
         scale: scale,
         useCORS: true,
         allowTaint: true,
-        onclone: (clonedDoc) => {
-          const style = clonedDoc.createElement('style');
-          style.innerHTML = `
-            * {
-              --tw-shadow: 0 0 #0000 !important;
-              --tw-shadow-colored: 0 0 #0000 !important;
-              --tw-ring-color: rgba(0, 0, 0, 0) !important;
-              border-color: currentColor !important;
-            }
-          `;
-          clonedDoc.head.appendChild(style);
-        }
       });
 
       const fileName = `qrcode_${Date.now()}`;
+      const fileExt = downloadFormat === "jpg" ? "jpg" : "png";
+      const mimeType = downloadFormat === "jpg" ? "image/jpeg" : "image/png";
 
       if (downloadFormat === "pdf") {
-        // Dynamic import for jspdf to keep bundle small
         const { jsPDF } = await import("jspdf");
         const imgData = canvas.toDataURL("image/png");
         const pdf = new jsPDF({
@@ -280,40 +272,45 @@ export default function App() {
 
         if (Capacitor.isNativePlatform()) {
           const pdfBase64 = pdf.output('datauristring').split(',')[1];
-          const savedFile = await Filesystem.writeFile({
+          await Filesystem.writeFile({
             path: `${fileName}.pdf`,
             data: pdfBase64,
             directory: Directory.Documents
           });
-          alert(`PDF saved to Documents: ${savedFile.uri}`);
+          alert(`PDF saved to Documents folder!`);
         } else {
           pdf.save(`${fileName}.pdf`);
         }
         return;
       }
 
-      const mimeType = downloadFormat === "jpg" ? "image/jpeg" : "image/png";
-      const fileExt = downloadFormat === "jpg" ? "jpg" : "png";
-      const base64Data = canvas.toDataURL(mimeType, 1.0); // 1.0 for max quality JPG
+      const base64Data = canvas.toDataURL(mimeType, 1.0);
 
       if (Capacitor.isNativePlatform()) {
+        const rawBase64 = base64Data.split(',')[1]; // STRIP PREFIX for native storage
         const fullFileName = `${fileName}.${fileExt}`;
 
-        // 1. Save to temporary filesystem
+        // Save to cache first
         const savedFile = await Filesystem.writeFile({
           path: fullFileName,
-          data: base64Data,
+          data: rawBase64,
           directory: Directory.Cache
         });
 
-        // 2. Save to Gallery using Media plugin
-        await Media.savePhoto({
-          path: savedFile.uri
-        });
-
-        alert(`Ultra-High Res ${fileExt.toUpperCase()} saved to gallery!`);
+        if (saveToFolder === "Gallery") {
+          await Media.savePhoto({ path: savedFile.uri });
+          alert("Saved to Photo Gallery! ✅");
+        } else {
+          // Save to specified system folder
+          const targetDir = saveToFolder === "Documents" ? Directory.Documents : Directory.Data;
+          await Filesystem.writeFile({
+            path: fullFileName,
+            data: rawBase64,
+            directory: targetDir
+          });
+          alert(`Saved to ${saveToFolder} folder! ✅`);
+        }
       } else {
-        // Web download fallback
         const link = document.createElement("a");
         link.download = `${fileName}.${fileExt}`;
         link.href = base64Data;
@@ -321,7 +318,7 @@ export default function App() {
       }
     } catch (error) {
       console.error("Save error:", error);
-      alert("Failed to save. Please try again.");
+      alert("Failed to save. Please check permissions and try again.");
     }
   };
 
@@ -410,6 +407,12 @@ export default function App() {
           </span>
         </div>
         <div className="flex items-center gap-4">
+          <button
+            onClick={() => setShowSettingsModal(true)}
+            className={`p-2 rounded-lg transition-colors ${isDarkMode ? 'bg-slate-800 text-slate-300 hover:bg-slate-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+          >
+            <Settings size={20} />
+          </button>
           <button
             onClick={() => setIsDarkMode(!isDarkMode)}
             className={`p-2 rounded-lg transition-colors ${isDarkMode ? 'bg-slate-800 text-yellow-400 hover:bg-slate-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
@@ -1211,7 +1214,7 @@ export default function App() {
             </h2>
 
             {/* QR Preview Area */}
-            <div className={`p-8 rounded-2xl mb-8 w-full flex items-center justify-center min-h-[400px] transition-colors ${isDarkMode ? 'bg-zinc-950 shadow-inner border border-zinc-800/60' : 'bg-slate-50 border border-slate-100'}`}>
+            <div className={`p-8 rounded-2xl mb-8 w-full flex items-center justify-center min-h-[400px] transition-colors ${isDarkMode ? 'bg-zinc-800 shadow-inner border border-zinc-700' : 'bg-slate-50 border border-slate-100'}`}>
               <div ref={qrRef} className="flex items-center justify-center">
                 {(() => {
                   const qrSize = 200;
@@ -1877,6 +1880,113 @@ export default function App() {
           </div>
         </div >
       </main >
+
+      {/* Settings Modal */}
+      {showSettingsModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
+          <div className={`relative max-w-md w-full rounded-[32px] shadow-2xl p-8 animate-in zoom-in-95 duration-300 ${isDarkMode ? 'bg-zinc-900 border border-zinc-800' : 'bg-white'}`}>
+            <button
+              onClick={() => setShowSettingsModal(false)}
+              className={`absolute top-6 right-6 p-2 rounded-full transition-colors ${isDarkMode ? 'hover:bg-zinc-800 text-zinc-500' : 'hover:bg-slate-100 text-slate-400'}`}
+            >
+              <X size={20} />
+            </button>
+
+            <div className="flex items-center gap-4 mb-8">
+              <div className="w-12 h-12 bg-emerald-500/10 rounded-2xl flex items-center justify-center">
+                <Settings size={24} className="text-emerald-500" />
+              </div>
+              <div>
+                <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Settings</h2>
+                <p className={`text-sm ${isDarkMode ? 'text-zinc-500' : 'text-slate-500'}`}>Customize your app experience</p>
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              <div>
+                <span className={`text-xs font-bold uppercase tracking-widest mb-4 block ${isDarkMode ? 'text-zinc-600' : 'text-slate-400'}`}>
+                  Storage & Saving
+                </span>
+
+                <div className="grid grid-cols-1 gap-3">
+                  {[
+                    { id: "Gallery", label: "Phone Gallery", desc: "Saves to DCIM folder", icon: ImageIcon },
+                    { id: "Documents", label: "Documents", desc: "Native documents folder", icon: Folder },
+                    { id: "Data", label: "App Data", desc: "Private app storage", icon: HardDrive },
+                  ].map((option) => (
+                    <button
+                      key={option.id}
+                      onClick={() => {
+                        setSaveToFolder(option.id);
+                        localStorage.setItem("nazu_qr_save_folder", option.id);
+                      }}
+                      className={`flex items-center gap-4 p-4 rounded-2xl border-2 transition-all ${saveToFolder === option.id
+                          ? 'border-emerald-500 bg-emerald-500/5'
+                          : isDarkMode ? 'border-zinc-800 bg-zinc-800/30' : 'border-slate-100 bg-slate-50'
+                        }`}
+                    >
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${saveToFolder === option.id ? 'bg-emerald-500 text-white' : isDarkMode ? 'bg-zinc-800 text-zinc-400' : 'bg-white text-slate-400 border border-slate-100'
+                        }`}>
+                        <option.icon size={20} />
+                      </div>
+                      <div className="text-left flex-1">
+                        <p className={`font-bold text-sm ${isDarkMode ? 'text-zinc-200' : 'text-slate-800'}`}>{option.label}</p>
+                        <p className="text-[10px] text-zinc-500">{option.desc}</p>
+                      </div>
+                      {saveToFolder === option.id && (
+                        <div className="w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center">
+                          <ShieldCheck size={14} className="text-white" />
+                        </div>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className={`p-4 rounded-2xl border flex items-start gap-3 ${isDarkMode ? 'bg-emerald-500/5 border-emerald-500/10 text-emerald-500/80' : 'bg-emerald-50 border-emerald-100 text-emerald-700'}`}>
+                <Info size={18} className="shrink-0 mt-0.5" />
+                <p className="text-[11px] leading-relaxed">
+                  Tip: Use <b>Phone Gallery</b> for easiest access. QR codes will show up in your recent photos instantly.
+                </p>
+              </div>
+
+              <div className="pt-4 border-t border-zinc-800/50">
+                <div className={`flex items-center justify-between p-4 rounded-2xl ${isDarkMode ? 'bg-zinc-800/30' : 'bg-slate-50'}`}>
+                  <div className="flex items-center gap-3">
+                    <Heart size={16} className="text-rose-500 fill-rose-500" />
+                    <span className={`text-xs font-medium ${isDarkMode ? 'text-zinc-400' : 'text-slate-600'}`}>Version 2.0.0</span>
+                  </div>
+                  <span className="text-[10px] text-zinc-600 font-mono">Build #774</span>
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setShowSettingsModal(false)}
+              className="w-full mt-8 py-4 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-2xl transition-all shadow-lg shadow-emerald-500/20 transform active:scale-[0.98]"
+            >
+              Done
+            </button>
+          </div>
+        </div>
+      )}
+
+      <footer className={`py-12 text-center border-t transition-colors ${isDarkMode ? 'border-zinc-900 bg-zinc-950/50 text-zinc-600' : 'border-slate-100 bg-slate-50/50 text-slate-400'}`}>
+        <div className="flex items-center justify-center gap-2 mb-2">
+          <div className="w-6 h-6 bg-emerald-500/10 rounded-lg flex items-center justify-center">
+            <QrCode size={12} className="text-emerald-500" />
+          </div>
+          <p className="text-xs font-bold tracking-widest uppercase">Nazu QR Scanner</p>
+        </div>
+        <p className="text-sm font-medium">Developed by <span className="text-emerald-500">Md Nazmul Hassan</span></p>
+        <div className="mt-4 flex items-center justify-center gap-4 opacity-50">
+          <div className="w-1 h-1 rounded-full bg-current"></div>
+          <p className="text-[10px] uppercase tracking-[0.2em]">Privacy First</p>
+          <div className="w-1 h-1 rounded-full bg-current"></div>
+          <p className="text-[10px] uppercase tracking-[0.2em]">Ultra HD Quality</p>
+          <div className="w-1 h-1 rounded-full bg-current"></div>
+        </div>
+      </footer>
     </div >
   );
 }
