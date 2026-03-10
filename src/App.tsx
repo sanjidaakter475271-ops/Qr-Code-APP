@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import * as htmlToImage from "html-to-image";
+import html2canvas from "html2canvas";
 import StyledQRCode from "./components/StyledQRCode";
 import ColorPicker from "./components/ColorPicker";
 import type { DotType, CornerSquareType, CornerDotType } from "qr-code-styling";
@@ -238,44 +238,49 @@ export default function App() {
         // Step 1: Request Storage/Media permissions FIRST
         try {
           // For Android 12 and below, we need READ/WRITE storage
-          // For Android 13+, Media plugin handles it internally
-          // We request via Media plugin to cover all Android versions
           await Media.getAlbums(); // Triggers storage permission prompt on older Android
         } catch (storageErr) {
-          console.warn("Storage permission request step:", storageErr);
-          // Non-fatal — continue to camera
+          console.warn("Storage permission request step skipped or failed:", storageErr);
         }
 
-        // Step 2: Check camera permission status
-        const currentStatus = await NativeCamera.checkPermissions();
+        // Step 2: Check & Request camera permission status
+        try {
+          const currentStatus = await NativeCamera.checkPermissions();
+          if (currentStatus.camera === 'denied') {
+            alert("Camera permission was previously denied. Please enable Camera access in your phone settings to use the scanner.");
+            localStorage.setItem("nazu_permissions_granted", "true");
+            setShowPermissionModal(false);
+            return;
+          }
 
-        if (currentStatus.camera === 'denied') {
-          alert("Camera permission was previously denied. Please enable Camera access in your phone settings to use the scanner.");
-          // Mark granted to close modal — user can still generate QR codes
-          localStorage.setItem("nazu_permissions_granted", "true");
-          setShowPermissionModal(false);
-          return;
+          if (currentStatus.camera !== 'granted') {
+            const cameraStatus = await NativeCamera.requestPermissions({ permissions: ['camera'] });
+            if (cameraStatus.camera !== 'granted') {
+              alert("Camera permission is required for scanning. You can still generate QR codes!");
+            }
+          }
+        } catch (cameraErr) {
+          console.warn("Camera permission request step skipped or failed:", cameraErr);
         }
-
-        // Request Camera permissions SECOND
-        const cameraStatus = await NativeCamera.requestPermissions({ permissions: ['camera'] });
-        if (cameraStatus.camera !== 'granted') {
-          alert("Camera permission is required for scanning. You can still generate QR codes!");
-        }
-
       } else {
-        // Web Fallback — camera covers getUserMedia
-        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-          const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-          stream.getTracks().forEach(track => track.stop());
+        // Web Fallback
+        try {
+          if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            stream.getTracks().forEach(track => track.stop());
+          }
+        } catch (webCameraErr) {
+          console.warn("Web camera permission failed:", webCameraErr);
         }
       }
 
       localStorage.setItem("nazu_permissions_granted", "true");
       setShowPermissionModal(false);
     } catch (err: any) {
-      console.warn("Permission could not be obtained:", err);
-      alert(`Could not request permissions: ${err?.message || err}. Please check device settings.`);
+      console.warn("Permission modal error:", err);
+      // Don't show confusing error. Just close the modal so they can use the app.
+      localStorage.setItem("nazu_permissions_granted", "true");
+      setShowPermissionModal(false);
     }
   };
 
@@ -292,10 +297,11 @@ export default function App() {
 
     try {
       const scale = 4;
-      // html-to-image natively supports modern CSS features like Tailwind's oklch colors
-      const canvas = await htmlToImage.toCanvas(qrRef.current, {
+      const canvas = await html2canvas(qrRef.current, {
         backgroundColor: "#ffffff",
-        pixelRatio: scale,
+        scale: scale,
+        useCORS: true,
+        allowTaint: true,
       });
 
       const fileName = `qrcode_${Date.now()}`;
