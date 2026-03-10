@@ -66,6 +66,11 @@ jobs:
           sed -i 's/rootProject.ext.compileSdkVersion/35/g' android/app/build.gradle
           sed -i 's/rootProject.ext.targetSdkVersion/35/g' android/app/build.gradle
 
+      - name: Generate App Icons
+        run: |
+          npm install -D @capacitor/assets
+          npx @capacitor/assets generate --android
+
       - name: Build APK (Debug)
         run: |
           cd android

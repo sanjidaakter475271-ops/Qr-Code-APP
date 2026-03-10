@@ -6,7 +6,7 @@ import type { DotType, CornerSquareType, CornerDotType } from "qr-code-styling";
 import {
   Link2, AlignLeft, Mail, Phone, MessageSquare, Contact,
   MessageCircle, Wifi, FileText, Download, Scan, Moon, Sun,
-  Upload, X, Image as ImageIcon, Camera, ShieldCheck, HardDrive
+  Upload, X, Image as ImageIcon, Camera, ShieldCheck, HardDrive, QrCode
 } from "lucide-react";
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Media } from '@capacitor-community/media';
@@ -316,7 +316,7 @@ export default function App() {
             </h2>
 
             <p className={`text-center mb-8 ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-              To provide the best experience, Nazu Scanner Generator needs access to the following:
+              To provide the best experience, Nazu QR Scanner needs access to the following:
             </p>
 
             <div className="space-y-4 mb-8">
@@ -347,10 +347,10 @@ export default function App() {
                   key={fmt}
                   onClick={() => setDownloadFormat(fmt)}
                   className={`py-2 px-3 rounded-xl border text-xs font-bold transition-all ${downloadFormat === fmt
-                      ? "bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/20"
-                      : isDarkMode
-                        ? "bg-slate-800 border-slate-700 text-slate-300 hover:border-slate-500"
-                        : "bg-slate-50 border-slate-200 text-slate-600 hover:border-slate-300"
+                    ? "bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/20"
+                    : isDarkMode
+                      ? "bg-slate-800 border-slate-700 text-slate-300 hover:border-slate-500"
+                      : "bg-slate-50 border-slate-200 text-slate-600 hover:border-slate-300"
                     }`}
                 >
                   {fmt.toUpperCase()}
@@ -374,17 +374,12 @@ export default function App() {
 
       {/* Header */}
       <header className={`border-b px-6 py-4 flex items-center justify-between sticky top-0 z-50 backdrop-blur-md ${isDarkMode ? 'bg-slate-900/80 border-slate-800' : 'bg-white/80 border-slate-200'}`}>
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-emerald-500 rounded flex items-center justify-center">
-            <div className="w-4 h-4 grid grid-cols-2 gap-0.5">
-              <div className="bg-white rounded-sm"></div>
-              <div className="bg-white rounded-sm"></div>
-              <div className="bg-white rounded-sm"></div>
-              <div className="bg-emerald-500 rounded-sm"></div>
-            </div>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-xl shadow-lg shadow-emerald-500/20 flex items-center justify-center text-white p-2">
+            <QrCode className="w-full h-full" strokeWidth={2.5} />
           </div>
           <span className={`text-xl font-bold tracking-tight ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
-            Nazu Scanner Generator
+            Nazu QR Scanner
           </span>
         </div>
         <div className="flex items-center gap-4">

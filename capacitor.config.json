@@ -1,6 +1,6 @@
 {
     "appId": "com.nazmus.qrgenerator",
-    "appName": "Nazu QR Generator",
+    "appName": "Nazu QR Scanner",
     "webDir": "dist",
     "bundledWebRuntime": false
 }
