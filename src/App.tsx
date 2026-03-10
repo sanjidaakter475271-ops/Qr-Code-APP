@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import html2canvas from "html2canvas";
+import * as htmlToImage from "html-to-image";
 import StyledQRCode from "./components/StyledQRCode";
 import ColorPicker from "./components/ColorPicker";
 import type { DotType, CornerSquareType, CornerDotType } from "qr-code-styling";
@@ -258,7 +258,7 @@ export default function App() {
         }
 
         // Request Camera permissions SECOND
-        const cameraStatus = await NativeCamera.requestPermissions();
+        const cameraStatus = await NativeCamera.requestPermissions({ permissions: ['camera'] });
         if (cameraStatus.camera !== 'granted') {
           alert("Camera permission is required for scanning. You can still generate QR codes!");
         }
@@ -273,9 +273,9 @@ export default function App() {
 
       localStorage.setItem("nazu_permissions_granted", "true");
       setShowPermissionModal(false);
-    } catch (err) {
+    } catch (err: any) {
       console.warn("Permission could not be obtained:", err);
-      alert("Could not request permissions. Please check your device settings.");
+      alert(`Could not request permissions: ${err?.message || err}. Please check device settings.`);
     }
   };
 
@@ -292,11 +292,10 @@ export default function App() {
 
     try {
       const scale = 4;
-      const canvas = await html2canvas(qrRef.current, {
+      // html-to-image natively supports modern CSS features like Tailwind's oklch colors
+      const canvas = await htmlToImage.toCanvas(qrRef.current, {
         backgroundColor: "#ffffff",
-        scale: scale,
-        useCORS: true,
-        allowTaint: true,
+        pixelRatio: scale,
       });
 
       const fileName = `qrcode_${Date.now()}`;
