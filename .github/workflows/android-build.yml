@@ -45,7 +45,7 @@ jobs:
           # Ensure variables.gradle exists with complete property list
           cat > android/variables.gradle <<EOF
           ext {
-              minSdkVersion = 21
+              minSdkVersion = 23
               compileSdkVersion = 35
               targetSdkVersion = 35
               androidxActivityVersion = '1.9.1'
@@ -69,7 +69,7 @@ jobs:
 
           # Patch app/build.gradle to ensure it uses the variables and doesn't crash
           # Replace rootProject.ext calls with hardcoded values if rootProject is null
-          sed -i 's/rootProject.ext.minSdkVersion/21/g' android/app/build.gradle
+          sed -i 's/rootProject.ext.minSdkVersion/23/g' android/app/build.gradle
           sed -i 's/rootProject.ext.compileSdkVersion/35/g' android/app/build.gradle
           sed -i 's/rootProject.ext.targetSdkVersion/35/g' android/app/build.gradle
 
