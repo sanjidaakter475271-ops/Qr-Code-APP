@@ -1577,25 +1577,31 @@ export default function App() {
 
                     case "clipboard":
                       return (
-                        <div className="relative pt-5">
+                        <div className="relative pt-6 min-w-[260px]">
+                          {/* Clipboard Header/Clip */}
                           <div
-                            className="absolute top-0 left-1/2 -translate-x-1/2 w-20 h-7 rounded-t-lg z-20 flex justify-center"
+                            className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-8 rounded-t-xl z-20 flex justify-center shadow-md"
                             style={{ backgroundColor: frameColor }}
                           >
-                            <div className="w-10 h-2 bg-white/40 rounded-full mt-1.5" />
+                            <div className="w-12 h-2.5 bg-black/20 rounded-full mt-2" />
                             <div
-                              className="absolute -top-2 w-6 h-4 rounded-t-full"
+                              className="absolute -top-3 w-8 h-5 rounded-t-full border-4 border-white"
                               style={{ backgroundColor: frameColor }}
                             ></div>
-                            <div className="absolute -top-1 w-3 h-2 bg-white/40 rounded-full" />
                           </div>
+
+                          {/* Clipboard Board */}
                           <div
-                            className="bg-white p-4 rounded-xl flex flex-col pt-6"
-                            style={{ border: `4px solid ${frameColor}`, boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
+                            className="bg-white rounded-2xl flex flex-col pt-8 overflow-hidden"
+                            style={{ border: `4px solid ${frameColor}`, boxShadow: '0 15px 35px -5px rgba(0, 0, 0, 0.2)' }}
                           >
-                            {qrWrapper}
-                            <div className="mt-4 border-t-2 border-dashed pt-4 flex justify-center items-center" style={{ borderColor: `${frameColor}40` }}>
-                              {textElement(frameColor)}
+                            <div className="p-4 flex items-center justify-center">
+                              {qrWrapper}
+                            </div>
+
+                            {/* Black bottom section */}
+                            <div className="bg-black py-4 px-2 flex justify-center items-center">
+                              {textElement("#ffffff")}
                             </div>
                           </div>
                         </div>
@@ -1644,74 +1650,33 @@ export default function App() {
                       );
                     case "bag":
                       return (
-                        <div className="relative pt-12 pb-8 w-full max-w-[320px] flex flex-col items-center">
-                          {/* Top handle */}
+                        <div className="relative pt-12 pb-4 w-full max-w-[320px] flex flex-col items-center group">
+                          {/* 3D Handle */}
                           <div
-                            className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-16 border-[16px] border-b-0 rounded-t-[40px] z-0"
-                            style={{ borderColor: frameColor }}
+                            className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-20 border-[20px] border-b-0 rounded-t-[50px] z-0 transition-transform group-hover:scale-105"
+                            style={{
+                              borderColor: frameColor,
+                              filter: 'drop-shadow(0 4px 4px rgba(0,0,0,0.2))'
+                            }}
                           />
 
-                          {/* Main body */}
+                          {/* 3D Bag Body */}
                           <div
-                            className="w-full flex flex-col rounded-[32px] overflow-visible relative z-10"
+                            className="w-full flex flex-col rounded-[40px] overflow-hidden relative z-10 border-b-[8px] border-black/20"
                             style={{
                               backgroundColor: frameColor,
-                              padding: "20px",
-                              boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.2)',
+                              boxShadow: '0 20px 40px -10px rgba(0, 0, 0, 0.3), inset 0 2px 10px rgba(255,255,255,0.2)',
                             }}
                           >
-                            <div className="bg-white p-5 rounded-2xl shadow-inner flex items-center justify-center">
+                            {/* White QR Area */}
+                            <div className="bg-white m-5 p-5 rounded-3xl shadow-inner flex items-center justify-center">
                               {qrWrapper}
                             </div>
 
-                            {/* Ribbon footer */}
-                            <div className="relative mt-8 mb-[-12px] flex items-center justify-center h-16 w-[115%] left-[-7.5%]">
-                              {/* Central banner */}
-                              <div
-                                className="absolute inset-0 z-20 flex items-center justify-center rounded-lg"
-                                style={{
-                                  backgroundColor: frameColor,
-                                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.2)'
-                                }}
-                              >
-                                {textElement("#ffffff")}
-                              </div>
-
-                              {/* Ribbon folds (shadows) */}
-                              <div
-                                className="absolute -top-[12px] left-[15px] w-[15px] h-[12px] z-10"
-                                style={{
-                                  backgroundColor: "#000000",
-                                  opacity: 0.5,
-                                  clipPath: "polygon(100% 0, 100% 100%, 0 100%)"
-                                }}
-                              />
-                              <div
-                                className="absolute -top-[12px] right-[15px] w-[15px] h-[12px] z-10"
-                                style={{
-                                  backgroundColor: "#000000",
-                                  opacity: 0.5,
-                                  clipPath: "polygon(0 0, 0 100%, 100% 100%)"
-                                }}
-                              />
-
-                              {/* Ribbon wings */}
-                              <div
-                                className="absolute -top-[12px] -left-6 h-14 w-8 z-0"
-                                style={{
-                                  backgroundColor: frameColor,
-                                  opacity: 0.9,
-                                  clipPath: "polygon(0 0, 100% 0, 100% 100%, 0 100%, 12px 50%)"
-                                }}
-                              />
-                              <div
-                                className="absolute -top-[12px] -right-6 h-14 w-8 z-0"
-                                style={{
-                                  backgroundColor: frameColor,
-                                  opacity: 0.9,
-                                  clipPath: "polygon(0 0, 100% 0, calc(100% - 12px) 50%, 100% 100%, 0 100%)"
-                                }}
-                              />
+                            {/* Integrated Black Footer */}
+                            <div className="bg-black py-6 mt-2 flex items-center justify-center relative">
+                              <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-b from-black/40 to-transparent" />
+                              {textElement("#ffffff")}
                             </div>
                           </div>
                         </div>
@@ -2069,156 +2034,158 @@ export default function App() {
       </main >
 
       {/* Settings Modal */}
-      {showSettingsModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
-          <div className={`relative max-w-md w-full rounded-[32px] shadow-2xl p-8 animate-in zoom-in-95 duration-300 ${isDarkMode ? 'bg-zinc-900 border border-zinc-800' : 'bg-white'}`}>
-            <button
-              onClick={() => setShowSettingsModal(false)}
-              className={`absolute top-6 right-6 p-2 rounded-full transition-colors ${isDarkMode ? 'hover:bg-zinc-800 text-zinc-500' : 'hover:bg-slate-100 text-slate-400'}`}
-            >
-              <X size={20} />
-            </button>
+      {
+        showSettingsModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
+            <div className={`relative max-w-md w-full max-h-[90vh] flex flex-col rounded-[32px] shadow-2xl p-8 animate-in zoom-in-95 duration-300 ${isDarkMode ? 'bg-zinc-900 border border-zinc-800' : 'bg-white'}`}>
+              <button
+                onClick={() => setShowSettingsModal(false)}
+                className={`absolute top-6 right-6 p-2 rounded-full transition-colors ${isDarkMode ? 'hover:bg-zinc-800 text-zinc-500' : 'hover:bg-slate-100 text-slate-400'}`}
+              >
+                <X size={20} />
+              </button>
 
-            <div className="flex items-center gap-4 mb-8">
-              <div className="w-12 h-12 bg-emerald-500/10 rounded-2xl flex items-center justify-center">
-                <Settings size={24} className="text-emerald-500" />
-              </div>
-              <div>
-                <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Settings</h2>
-                <p className={`text-sm ${isDarkMode ? 'text-zinc-500' : 'text-slate-500'}`}>Customize your app experience</p>
-              </div>
-            </div>
-
-            <div className="space-y-6">
-              <div>
-                <span className={`text-xs font-bold uppercase tracking-widest mb-4 block ${isDarkMode ? 'text-zinc-600' : 'text-slate-400'}`}>
-                  Storage & Saving
-                </span>
-
-                <div className="grid grid-cols-1 gap-3">
-                  {[
-                    { id: "Gallery", label: "Phone Gallery", desc: "Saves to DCIM folder", icon: ImageIcon },
-                    { id: "Documents", label: "Documents", desc: "Native documents folder", icon: Folder },
-                    { id: "Custom", label: "Custom Folder", desc: "Specify a subfolder", icon: HardDrive },
-                  ].map((option) => (
-                    <button
-                      key={option.id}
-                      onClick={() => {
-                        setSaveToFolder(option.id);
-                        localStorage.setItem("nazu_qr_save_folder", option.id);
-                      }}
-                      className={`flex items-center gap-4 p-4 rounded-2xl border-2 transition-all ${saveToFolder === option.id
-                        ? 'border-emerald-500 bg-emerald-500/5'
-                        : isDarkMode ? 'border-zinc-800 bg-zinc-800/30' : 'border-slate-100 bg-slate-50'
-                        }`}
-                    >
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${saveToFolder === option.id ? 'bg-emerald-500 text-white' : isDarkMode ? 'bg-zinc-800 text-zinc-400' : 'bg-white text-slate-400 border border-slate-100'
-                        }`}>
-                        <option.icon size={20} />
-                      </div>
-                      <div className="text-left flex-1">
-                        <p className={`font-bold text-sm ${isDarkMode ? 'text-zinc-200' : 'text-slate-800'}`}>{option.label}</p>
-                        <p className="text-[10px] text-zinc-500">{option.desc}</p>
-                      </div>
-                      {saveToFolder === option.id && (
-                        <div className="w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center">
-                          <ShieldCheck size={14} className="text-white" />
-                        </div>
-                      )}
-                    </button>
-                  ))}
+              <div className="flex items-center gap-4 mb-8">
+                <div className="w-12 h-12 bg-emerald-500/10 rounded-2xl flex items-center justify-center">
+                  <Settings size={24} className="text-emerald-500" />
                 </div>
+                <div>
+                  <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Settings</h2>
+                  <p className={`text-sm ${isDarkMode ? 'text-zinc-500' : 'text-slate-500'}`}>Customize your app experience</p>
+                </div>
+              </div>
 
-                {saveToFolder === "Custom" && (
-                  <div className="mt-4 animate-in slide-in-from-top-2 duration-300">
-                    <label className={`text-[10px] font-bold uppercase tracking-widest mb-2 block ${isDarkMode ? 'text-zinc-600' : 'text-slate-400'}`}>
-                      Subfolder Name (under Documents)
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        value={customFolderPath}
-                        onChange={(e) => {
-                          const val = e.target.value.replace(/[^a-zA-Z0-9_\-]/g, "");
-                          setCustomFolderPath(val);
-                          localStorage.setItem("nazu_qr_custom_folder", val);
+              <div className="space-y-6 overflow-y-auto flex-1 pr-2 scrollbar-hide py-2">
+                <div>
+                  <span className={`text-xs font-bold uppercase tracking-widest mb-4 block ${isDarkMode ? 'text-zinc-600' : 'text-slate-400'}`}>
+                    Storage & Saving
+                  </span>
+
+                  <div className="grid grid-cols-1 gap-3">
+                    {[
+                      { id: "Gallery", label: "Phone Gallery", desc: "Saves to DCIM folder", icon: ImageIcon },
+                      { id: "Documents", label: "Documents", desc: "Native documents folder", icon: Folder },
+                      { id: "Custom", label: "Custom Folder", desc: "Specify a subfolder", icon: HardDrive },
+                    ].map((option) => (
+                      <button
+                        key={option.id}
+                        onClick={() => {
+                          setSaveToFolder(option.id);
+                          localStorage.setItem("nazu_qr_save_folder", option.id);
                         }}
-                        className={`w-full px-4 py-3 rounded-xl border-2 outline-none transition-all ${isDarkMode ? 'bg-zinc-800/50 border-zinc-700 text-white focus:border-emerald-500' : 'bg-white border-slate-100 text-slate-900 focus:border-emerald-500'}`}
-                        placeholder="MyQRCodes"
-                      />
-                      <Folder size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500" />
+                        className={`flex items-center gap-4 p-4 rounded-2xl border-2 transition-all ${saveToFolder === option.id
+                          ? 'border-emerald-500 bg-emerald-500/5'
+                          : isDarkMode ? 'border-zinc-800 bg-zinc-800/30' : 'border-slate-100 bg-slate-50'
+                          }`}
+                      >
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${saveToFolder === option.id ? 'bg-emerald-500 text-white' : isDarkMode ? 'bg-zinc-800 text-zinc-400' : 'bg-white text-slate-400 border border-slate-100'
+                          }`}>
+                          <option.icon size={20} />
+                        </div>
+                        <div className="text-left flex-1">
+                          <p className={`font-bold text-sm ${isDarkMode ? 'text-zinc-200' : 'text-slate-800'}`}>{option.label}</p>
+                          <p className="text-[10px] text-zinc-500">{option.desc}</p>
+                        </div>
+                        {saveToFolder === option.id && (
+                          <div className="w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center">
+                            <ShieldCheck size={14} className="text-white" />
+                          </div>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+
+                  {saveToFolder === "Custom" && (
+                    <div className="mt-4 animate-in slide-in-from-top-2 duration-300">
+                      <label className={`text-[10px] font-bold uppercase tracking-widest mb-2 block ${isDarkMode ? 'text-zinc-600' : 'text-slate-400'}`}>
+                        Subfolder Name (under Documents)
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={customFolderPath}
+                          onChange={(e) => {
+                            const val = e.target.value.replace(/[^a-zA-Z0-9_\-]/g, "");
+                            setCustomFolderPath(val);
+                            localStorage.setItem("nazu_qr_custom_folder", val);
+                          }}
+                          className={`w-full px-4 py-3 rounded-xl border-2 outline-none transition-all ${isDarkMode ? 'bg-zinc-800/50 border-zinc-700 text-white focus:border-emerald-500' : 'bg-white border-slate-100 text-slate-900 focus:border-emerald-500'}`}
+                          placeholder="MyQRCodes"
+                        />
+                        <Folder size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500" />
+                      </div>
+                      <p className="text-[10px] text-zinc-500 mt-2">
+                        Will be saved in: /Documents/{customFolderPath || 'Custom'}
+                      </p>
                     </div>
-                    <p className="text-[10px] text-zinc-500 mt-2">
-                      Will be saved in: /Documents/{customFolderPath || 'Custom'}
-                    </p>
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
 
-              <div className={`p-4 rounded-2xl border flex items-start gap-3 ${isDarkMode ? 'bg-emerald-500/5 border-emerald-500/10 text-emerald-500/80' : 'bg-emerald-50 border-emerald-100 text-emerald-700'}`}>
-                <Info size={18} className="shrink-0 mt-0.5" />
-                <p className="text-[11px] leading-relaxed">
-                  Tip: Use <b>Phone Gallery</b> for easiest access. QR codes will show up in your recent photos instantly.
-                </p>
-              </div>
+                <div className={`p-4 rounded-2xl border flex items-start gap-3 ${isDarkMode ? 'bg-emerald-500/5 border-emerald-500/10 text-emerald-500/80' : 'bg-emerald-50 border-emerald-100 text-emerald-700'}`}>
+                  <Info size={18} className="shrink-0 mt-0.5" />
+                  <p className="text-[11px] leading-relaxed">
+                    Tip: Use <b>Phone Gallery</b> for easiest access. QR codes will show up in your recent photos instantly.
+                  </p>
+                </div>
 
-              <div className="pt-4 border-t border-zinc-800/50">
-                <div className={`flex items-center justify-between p-4 rounded-2xl ${isDarkMode ? 'bg-zinc-800/30' : 'bg-slate-50'}`}>
-                  <div className="flex items-center gap-3">
-                    <Heart size={16} className="text-rose-500 fill-rose-500" />
-                    <span className={`text-xs font-medium ${isDarkMode ? 'text-zinc-400' : 'text-slate-600'}`}>Version 2.0.0</span>
+                <div className="pt-4 border-t border-zinc-800/50">
+                  <div className={`flex items-center justify-between p-4 rounded-2xl ${isDarkMode ? 'bg-zinc-800/30' : 'bg-slate-50'}`}>
+                    <div className="flex items-center gap-3">
+                      <Heart size={16} className="text-rose-500 fill-rose-500" />
+                      <span className={`text-xs font-medium ${isDarkMode ? 'text-zinc-400' : 'text-slate-600'}`}>Version 2.0.0</span>
+                    </div>
+                    <span className="text-[10px] text-zinc-600 font-mono">Build #774</span>
                   </div>
-                  <span className="text-[10px] text-zinc-600 font-mono">Build #774</span>
+                </div>
+
+                <div className="pt-6 border-t border-zinc-800/50">
+                  <span className={`text-xs font-bold uppercase tracking-widest mb-4 block ${isDarkMode ? 'text-zinc-600' : 'text-slate-400'}`}>
+                    Data Management
+                  </span>
+
+                  <div className={`p-4 rounded-2xl border mb-4 flex items-center justify-between transition-all ${isDarkMode ? 'bg-emerald-500/5 border-emerald-500/10' : 'bg-emerald-50 border-emerald-100'}`}>
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center">
+                        <ShieldCheck size={18} className="text-emerald-500" />
+                      </div>
+                      <div>
+                        <p className={`text-sm font-bold ${isDarkMode ? 'text-emerald-400' : 'text-emerald-700'}`}>Caching System Active</p>
+                        <p className={`text-[10px] opacity-70 ${isDarkMode ? 'text-emerald-500' : 'text-emerald-600'}`}>Auto-saving your progress & settings</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      if (window.confirm("Reset all settings and clear cache? Your current design will be lost.")) {
+                        localStorage.removeItem("nazu_qr_app_state");
+                        localStorage.removeItem("nazu_qr_save_folder");
+                        localStorage.removeItem("nazu_qr_custom_folder");
+                        localStorage.removeItem("nazu_permissions_granted");
+                        window.location.reload();
+                      }
+                    }}
+                    className={`w-full py-4 rounded-2xl border-2 flex items-center justify-center gap-2 transition-all font-bold text-sm ${isDarkMode
+                      ? 'border-red-500/20 bg-red-500/5 text-red-400 hover:bg-red-500/10 hover:border-red-500/40'
+                      : 'border-red-100 bg-red-50 text-red-600 hover:bg-red-100 hover:border-red-200'
+                      }`}
+                  >
+                    <X size={18} />
+                    Reset to Factory Settings
+                  </button>
                 </div>
               </div>
 
-              <div className="pt-6 border-t border-zinc-800/50">
-                <span className={`text-xs font-bold uppercase tracking-widest mb-4 block ${isDarkMode ? 'text-zinc-600' : 'text-slate-400'}`}>
-                  Data Management
-                </span>
-
-                <div className={`p-4 rounded-2xl border mb-4 flex items-center justify-between transition-all ${isDarkMode ? 'bg-emerald-500/5 border-emerald-500/10' : 'bg-emerald-50 border-emerald-100'}`}>
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center">
-                      <ShieldCheck size={18} className="text-emerald-500" />
-                    </div>
-                    <div>
-                      <p className={`text-sm font-bold ${isDarkMode ? 'text-emerald-400' : 'text-emerald-700'}`}>Caching System Active</p>
-                      <p className={`text-[10px] opacity-70 ${isDarkMode ? 'text-emerald-500' : 'text-emerald-600'}`}>Auto-saving your progress & settings</p>
-                    </div>
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => {
-                    if (window.confirm("Reset all settings and clear cache? Your current design will be lost.")) {
-                      localStorage.removeItem("nazu_qr_app_state");
-                      localStorage.removeItem("nazu_qr_save_folder");
-                      localStorage.removeItem("nazu_qr_custom_folder");
-                      localStorage.removeItem("nazu_permissions_granted");
-                      window.location.reload();
-                    }
-                  }}
-                  className={`w-full py-4 rounded-2xl border-2 flex items-center justify-center gap-2 transition-all font-bold text-sm ${isDarkMode
-                    ? 'border-red-500/20 bg-red-500/5 text-red-400 hover:bg-red-500/10 hover:border-red-500/40'
-                    : 'border-red-100 bg-red-50 text-red-600 hover:bg-red-100 hover:border-red-200'
-                    }`}
-                >
-                  <X size={18} />
-                  Reset to Factory Settings
-                </button>
-              </div>
+              <button
+                onClick={() => setShowSettingsModal(false)}
+                className="w-full mt-8 py-4 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-2xl transition-all shadow-lg shadow-emerald-500/20 transform active:scale-[0.98]"
+              >
+                Done
+              </button>
             </div>
-
-            <button
-              onClick={() => setShowSettingsModal(false)}
-              className="w-full mt-8 py-4 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-2xl transition-all shadow-lg shadow-emerald-500/20 transform active:scale-[0.98]"
-            >
-              Done
-            </button>
           </div>
-        </div>
-      )}
+        )
+      }
 
       <footer className={`py-12 text-center border-t transition-colors ${isDarkMode ? 'border-zinc-900 bg-zinc-950/50 text-zinc-600' : 'border-slate-100 bg-slate-50/50 text-slate-400'}`}>
         <div className="flex items-center justify-center gap-2 mb-2">
