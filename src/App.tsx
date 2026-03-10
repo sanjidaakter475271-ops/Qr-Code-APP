@@ -1641,24 +1641,74 @@ export default function App() {
                       );
                     case "bag":
                       return (
-                        <div className="relative pt-12 w-full max-w-[280px]">
+                        <div className="relative pt-12 pb-8 w-full max-w-[320px] flex flex-col items-center">
+                          {/* Top handle */}
                           <div
-                            className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-16 border-[16px] border-b-0 rounded-t-3xl z-0"
+                            className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-16 border-[16px] border-b-0 rounded-t-[40px] z-0"
                             style={{ borderColor: frameColor }}
                           />
+
+                          {/* Main body */}
                           <div
-                            className="flex flex-col rounded-[32px] overflow-hidden relative z-10"
+                            className="w-full flex flex-col rounded-[32px] overflow-visible relative z-10"
                             style={{
                               backgroundColor: frameColor,
-                              padding: "16px",
-                              boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+                              padding: "20px",
+                              boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.2)',
                             }}
                           >
-                            <div className="bg-white p-4 rounded-2xl">
+                            <div className="bg-white p-5 rounded-2xl shadow-inner flex items-center justify-center">
                               {qrWrapper}
                             </div>
-                            <div className="h-20 flex items-center justify-center mt-2">
-                              {textElement("#ffffff")}
+
+                            {/* Ribbon footer */}
+                            <div className="relative mt-8 mb-[-12px] flex items-center justify-center h-16 w-[115%] left-[-7.5%]">
+                              {/* Central banner */}
+                              <div
+                                className="absolute inset-0 z-20 flex items-center justify-center rounded-lg"
+                                style={{
+                                  backgroundColor: frameColor,
+                                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.2)'
+                                }}
+                              >
+                                {textElement("#ffffff")}
+                              </div>
+
+                              {/* Ribbon folds (shadows) */}
+                              <div
+                                className="absolute -top-[12px] left-[15px] w-[15px] h-[12px] z-10"
+                                style={{
+                                  backgroundColor: "#000000",
+                                  opacity: 0.5,
+                                  clipPath: "polygon(100% 0, 100% 100%, 0 100%)"
+                                }}
+                              />
+                              <div
+                                className="absolute -top-[12px] right-[15px] w-[15px] h-[12px] z-10"
+                                style={{
+                                  backgroundColor: "#000000",
+                                  opacity: 0.5,
+                                  clipPath: "polygon(0 0, 0 100%, 100% 100%)"
+                                }}
+                              />
+
+                              {/* Ribbon wings */}
+                              <div
+                                className="absolute -top-[12px] -left-6 h-14 w-8 z-0"
+                                style={{
+                                  backgroundColor: frameColor,
+                                  opacity: 0.9,
+                                  clipPath: "polygon(0 0, 100% 0, 100% 100%, 0 100%, 12px 50%)"
+                                }}
+                              />
+                              <div
+                                className="absolute -top-[12px] -right-6 h-14 w-8 z-0"
+                                style={{
+                                  backgroundColor: frameColor,
+                                  opacity: 0.9,
+                                  clipPath: "polygon(0 0, 100% 0, calc(100% - 12px) 50%, 100% 100%, 0 100%)"
+                                }}
+                              />
                             </div>
                           </div>
                         </div>
