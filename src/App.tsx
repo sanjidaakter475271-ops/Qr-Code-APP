@@ -293,8 +293,7 @@ export default function App() {
 
         // 2. Save to Gallery using Media plugin
         await Media.savePhoto({
-          path: savedFile.uri,
-          albumName: 'QR Codes'
+          path: savedFile.uri
         });
 
         alert(`Ultra-High Res ${fileExt.toUpperCase()} saved to gallery!`);
