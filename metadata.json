@@ -1,0 +1,5 @@
+{
+  "name": "Nazu Scanner Generator",
+  "description": "A comprehensive QR code generator supporting multiple data types, custom frames, colors, and shapes.",
+  "requestFramePermissions": ["camera"]
+}
