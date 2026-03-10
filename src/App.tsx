@@ -288,14 +288,12 @@ export default function App() {
   const handleDownload = async () => {
     if (!qrRef.current) return;
 
-    // Toast-like loading message (optional, for better UX)
     console.log("Generating QR image...");
 
     try {
-      // Ultra high-resolution scale (4x)
       const scale = 4;
       const canvas = await html2canvas(qrRef.current, {
-        backgroundColor: "#ffffff", // Always white background for the actual save
+        backgroundColor: "#ffffff",
         scale: scale,
         useCORS: true,
         allowTaint: true,
@@ -322,7 +320,7 @@ export default function App() {
             data: pdfBase64,
             directory: Directory.Documents
           });
-          alert(`PDF saved to Documents folder!`);
+          alert(`PDF saved to Documents folder! ✅`);
         } else {
           pdf.save(`${fileName}.pdf`);
         }
@@ -337,51 +335,82 @@ export default function App() {
 
         if (saveToFolder === "Gallery") {
           const dataUri = `data:${mimeType};base64,${rawBase64}`;
-          const albumName = "Nazu QR";
 
+          // ─── Step 1: Check & request Photos/Storage permission via Camera plugin ───
           try {
-            // Android requires an album identifier or it might fail on some versions
-            const albums = await Media.getAlbums();
-            const albumsPath = await Media.getAlbumsPath();
+            const permStatus = await NativeCamera.checkPermissions();
+            console.log("Permission status:", JSON.stringify(permStatus));
 
-            // Try to find existing album
-            let album = albums.albums.find(a =>
-              a.name === albumName && a.identifier.startsWith(albumsPath.path)
-            );
+            // 'photos' covers READ_MEDIA_IMAGES / READ_EXTERNAL_STORAGE on Android
+            if (permStatus.photos !== 'granted' && permStatus.photos !== 'limited') {
+              const reqStatus = await NativeCamera.requestPermissions({ permissions: ['photos'] });
+              console.log("Permission after request:", JSON.stringify(reqStatus));
 
-            if (!album) {
-              await Media.createAlbum({ name: albumName });
-              const refreshed = await Media.getAlbums();
-              album = refreshed.albums.find(a =>
+              if (reqStatus.photos !== 'granted' && reqStatus.photos !== 'limited') {
+                alert("Storage/Photos permission denied.\n\nGo to: Settings → Apps → Nazu QR Scanner → Permissions → Photos/Media → Allow.");
+                return;
+              }
+            }
+          } catch (permErr) {
+            console.warn("Permission check skipped (Android 13+ may handle internally):", permErr);
+            // Non-fatal — continue, plugin may handle internally
+          }
+
+          // ─── Step 2: Try saving to album ───
+          try {
+            let albumIdentifier: string | undefined;
+
+            try {
+              const albums = await Media.getAlbums();
+              const albumsPath = await Media.getAlbumsPath();
+              const albumName = "Nazu QR";
+
+              let album = albums.albums.find(a =>
                 a.name === albumName && a.identifier.startsWith(albumsPath.path)
               );
+
+              if (!album) {
+                await Media.createAlbum({ name: albumName });
+                const refreshed = await Media.getAlbums();
+                album = refreshed.albums.find(a =>
+                  a.name === albumName && a.identifier.startsWith(albumsPath.path)
+                );
+              }
+              albumIdentifier = album?.identifier;
+            } catch (albumErr) {
+              console.warn("Album lookup failed, saving to default gallery:", albumErr);
             }
 
             await Media.savePhoto({
               path: dataUri,
-              albumIdentifier: album?.identifier,
+              albumIdentifier,
               fileName: fileName
             });
-            alert("Saved to Nazu QR album in Gallery! ✅");
-          } catch (e) {
-            console.error("Gallery save error:", e);
-            // Fallback: simple save
+            alert("Saved to Gallery! ✅");
+
+          } catch (mediaErr: any) {
+            console.error("Media.savePhoto failed:", mediaErr);
+
+            // ─── Step 3: Filesystem fallback — save to Documents ───
             try {
-              await Media.savePhoto({ path: dataUri });
-              alert("Saved to Gallery! ✅");
-            } catch (fallbackErr) {
-              throw fallbackErr;
+              await Filesystem.writeFile({
+                path: fullFileName,
+                data: rawBase64,
+                directory: Directory.Documents,
+              });
+              alert("Gallery save failed. Saved to Documents folder instead! ✅");
+            } catch (fsErr: any) {
+              console.error("Filesystem fallback also failed:", fsErr);
+              throw new Error(`Media: ${mediaErr?.message || mediaErr} | FS: ${fsErr?.message || fsErr}`);
             }
           }
+
         } else {
-          // Filesystem Save (Documents, Data, or Custom)
+          // Documents / Custom folder save
           let targetDir = Directory.Documents;
           let targetPath = fullFileName;
 
-          if (saveToFolder === "Data") {
-            targetDir = Directory.Data;
-          } else if (saveToFolder === "Custom") {
-            // Ensure folder exists
+          if (saveToFolder === "Custom") {
             try {
               await Filesystem.mkdir({
                 path: customFolderPath,
@@ -400,20 +429,26 @@ export default function App() {
             directory: targetDir
           });
 
-          const location = saveToFolder === "Data" ? "Private App Storage" : (saveToFolder === "Custom" ? `Documents/${customFolderPath}` : "Documents");
-          alert(`Saved to ${location} folder! ✅`);
+          const location = saveToFolder === "Custom"
+            ? `Documents/${customFolderPath}`
+            : "Documents";
+          alert(`Saved to ${location}! ✅`);
         }
+
       } else {
+        // Web download
         const link = document.createElement("a");
         link.download = `${fileName}.${fileExt}`;
         link.href = base64Data;
         link.click();
       }
-    } catch (error) {
+
+    } catch (error: any) {
       console.error("Save error:", error);
-      alert("Failed to save. Please check permissions and try again.");
+      alert(`Failed to save: ${error?.message || error}\n\nPlease check app permissions in device Settings.`);
     }
   };
+
 
   return (
     <div className={`min-h-screen pb-[env(safe-area-inset-bottom)] font-sans transition-colors duration-300 ${isDarkMode ? 'bg-zinc-950 text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
