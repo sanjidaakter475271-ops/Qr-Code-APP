@@ -186,6 +186,7 @@ export default function App() {
   const [showPermissionModal, setShowPermissionModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [saveToFolder, setSaveToFolder] = useState(() => localStorage.getItem("nazu_qr_save_folder") || "Gallery");
+  const [customFolderPath, setCustomFolderPath] = useState(() => localStorage.getItem("nazu_qr_custom_folder") || "NazuQRCodes");
 
   useEffect(() => {
     const permissionsGranted = localStorage.getItem("nazu_permissions_granted");
@@ -197,28 +198,26 @@ export default function App() {
   const handleGrantPermissions = async () => {
     try {
       if (Capacitor.isNativePlatform()) {
+        // First check current status
+        const currentStatus = await NativeCamera.checkPermissions();
+
+        if (currentStatus.camera === 'denied') {
+          alert("Permission was previously denied. Please enable Camera access in your phone settings to use the scanner.");
+          // We mark as granted in LS even if denied to close the persistent modal, 
+          // allowing the user to use the generator even without scanning.
+          localStorage.setItem("nazu_permissions_granted", "true");
+          setShowPermissionModal(false);
+          return;
+        }
+
         // Request Camera Permissions
-        try {
-          const cameraStatus = await NativeCamera.checkPermissions();
-          if (cameraStatus.camera !== 'granted') {
-            await NativeCamera.requestPermissions();
-          }
-        } catch (e) {
-          console.warn("Camera permission request failed:", e);
+        const cameraStatus = await NativeCamera.requestPermissions();
+        if (cameraStatus.camera !== 'granted') {
+          alert("Camera permission is required for scanning. You can still generate QR codes!");
         }
 
-        // Add a small delay between dialogs to prevent the OS from blocking the second one
-        await new Promise(resolve => setTimeout(resolve, 800));
-
-        // Request Storage Permissions
-        try {
-          const fsStatus = await Filesystem.checkPermissions();
-          if (fsStatus.publicStorage !== 'granted') {
-            await Filesystem.requestPermissions();
-          }
-        } catch (e) {
-          console.warn("Storage permission request failed:", e);
-        }
+        // NOTE: Media plugin v7+ does not require explicit storage permissions 
+        // for saving to app-scoped albums on Android 13+.
       } else {
         // Web Fallback
         if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
@@ -231,9 +230,7 @@ export default function App() {
       setShowPermissionModal(false);
     } catch (err) {
       console.warn("Permission could not be obtained:", err);
-      // We still close the modal to not block the user, though native dialog might have appeared
-      localStorage.setItem("nazu_permissions_granted", "true");
-      setShowPermissionModal(false);
+      alert("Could not request permissions. Please check your device settings.");
     }
   };
 
@@ -245,6 +242,9 @@ export default function App() {
 
   const handleDownload = async () => {
     if (!qrRef.current) return;
+
+    // Toast-like loading message (optional, for better UX)
+    console.log("Generating QR image...");
 
     try {
       // Ultra high-resolution scale (4x)
@@ -287,28 +287,76 @@ export default function App() {
       const base64Data = canvas.toDataURL(mimeType, 1.0);
 
       if (Capacitor.isNativePlatform()) {
-        const rawBase64 = base64Data.split(',')[1]; // STRIP PREFIX for native storage
+        const rawBase64 = base64Data.split(',')[1];
         const fullFileName = `${fileName}.${fileExt}`;
 
-        // Save to cache first
-        const savedFile = await Filesystem.writeFile({
-          path: fullFileName,
-          data: rawBase64,
-          directory: Directory.Cache
-        });
-
         if (saveToFolder === "Gallery") {
-          await Media.savePhoto({ path: savedFile.uri });
-          alert("Saved to Photo Gallery! ✅");
+          const dataUri = `data:${mimeType};base64,${rawBase64}`;
+          const albumName = "Nazu QR";
+
+          try {
+            // Android requires an album identifier or it might fail on some versions
+            const albums = await Media.getAlbums();
+            const albumsPath = await Media.getAlbumsPath();
+
+            // Try to find existing album
+            let album = albums.albums.find(a =>
+              a.name === albumName && a.identifier.startsWith(albumsPath.path)
+            );
+
+            if (!album) {
+              await Media.createAlbum({ name: albumName });
+              const refreshed = await Media.getAlbums();
+              album = refreshed.albums.find(a =>
+                a.name === albumName && a.identifier.startsWith(albumsPath.path)
+              );
+            }
+
+            await Media.savePhoto({
+              path: dataUri,
+              albumIdentifier: album?.identifier,
+              fileName: fileName
+            });
+            alert("Saved to Nazu QR album in Gallery! ✅");
+          } catch (e) {
+            console.error("Gallery save error:", e);
+            // Fallback: simple save
+            try {
+              await Media.savePhoto({ path: dataUri });
+              alert("Saved to Gallery! ✅");
+            } catch (fallbackErr) {
+              throw fallbackErr;
+            }
+          }
         } else {
-          // Save to specified system folder
-          const targetDir = saveToFolder === "Documents" ? Directory.Documents : Directory.Data;
+          // Filesystem Save (Documents, Data, or Custom)
+          let targetDir = Directory.Documents;
+          let targetPath = fullFileName;
+
+          if (saveToFolder === "Data") {
+            targetDir = Directory.Data;
+          } else if (saveToFolder === "Custom") {
+            // Ensure folder exists
+            try {
+              await Filesystem.mkdir({
+                path: customFolderPath,
+                directory: Directory.Documents,
+                recursive: true
+              });
+              targetPath = `${customFolderPath}/${fullFileName}`;
+            } catch (e) {
+              console.warn("Subfolder creation failed, saving to root Documents", e);
+            }
+          }
+
           await Filesystem.writeFile({
-            path: fullFileName,
+            path: targetPath,
             data: rawBase64,
             directory: targetDir
           });
-          alert(`Saved to ${saveToFolder} folder! ✅`);
+
+          const location = saveToFolder === "Data" ? "Private App Storage" : (saveToFolder === "Custom" ? `Documents/${customFolderPath}` : "Documents");
+          alert(`Saved to ${location} folder! ✅`);
         }
       } else {
         const link = document.createElement("a");
@@ -1912,7 +1960,7 @@ export default function App() {
                   {[
                     { id: "Gallery", label: "Phone Gallery", desc: "Saves to DCIM folder", icon: ImageIcon },
                     { id: "Documents", label: "Documents", desc: "Native documents folder", icon: Folder },
-                    { id: "Data", label: "App Data", desc: "Private app storage", icon: HardDrive },
+                    { id: "Custom", label: "Custom Folder", desc: "Specify a subfolder", icon: HardDrive },
                   ].map((option) => (
                     <button
                       key={option.id}
@@ -1921,8 +1969,8 @@ export default function App() {
                         localStorage.setItem("nazu_qr_save_folder", option.id);
                       }}
                       className={`flex items-center gap-4 p-4 rounded-2xl border-2 transition-all ${saveToFolder === option.id
-                          ? 'border-emerald-500 bg-emerald-500/5'
-                          : isDarkMode ? 'border-zinc-800 bg-zinc-800/30' : 'border-slate-100 bg-slate-50'
+                        ? 'border-emerald-500 bg-emerald-500/5'
+                        : isDarkMode ? 'border-zinc-800 bg-zinc-800/30' : 'border-slate-100 bg-slate-50'
                         }`}
                     >
                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${saveToFolder === option.id ? 'bg-emerald-500 text-white' : isDarkMode ? 'bg-zinc-800 text-zinc-400' : 'bg-white text-slate-400 border border-slate-100'
@@ -1941,6 +1989,31 @@ export default function App() {
                     </button>
                   ))}
                 </div>
+
+                {saveToFolder === "Custom" && (
+                  <div className="mt-4 animate-in slide-in-from-top-2 duration-300">
+                    <label className={`text-[10px] font-bold uppercase tracking-widest mb-2 block ${isDarkMode ? 'text-zinc-600' : 'text-slate-400'}`}>
+                      Subfolder Name (under Documents)
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={customFolderPath}
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/[^a-zA-Z0-9_\-]/g, "");
+                          setCustomFolderPath(val);
+                          localStorage.setItem("nazu_qr_custom_folder", val);
+                        }}
+                        className={`w-full px-4 py-3 rounded-xl border-2 outline-none transition-all ${isDarkMode ? 'bg-zinc-800/50 border-zinc-700 text-white focus:border-emerald-500' : 'bg-white border-slate-100 text-slate-900 focus:border-emerald-500'}`}
+                        placeholder="MyQRCodes"
+                      />
+                      <Folder size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500" />
+                    </div>
+                    <p className="text-[10px] text-zinc-500 mt-2">
+                      Will be saved in: /Documents/{customFolderPath || 'Custom'}
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div className={`p-4 rounded-2xl border flex items-start gap-3 ${isDarkMode ? 'bg-emerald-500/5 border-emerald-500/10 text-emerald-500/80' : 'bg-emerald-50 border-emerald-100 text-emerald-700'}`}>
