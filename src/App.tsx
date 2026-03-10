@@ -194,10 +194,25 @@ export default function App() {
   const handleGrantPermissions = async () => {
     try {
       if (Capacitor.isNativePlatform()) {
-        // Request Native Permissions using Capacitor
-        await NativeCamera.requestPermissions();
+        // Request Camera Permissions
         try {
-          await Filesystem.requestPermissions();
+          const cameraStatus = await NativeCamera.checkPermissions();
+          if (cameraStatus.camera !== 'granted') {
+            await NativeCamera.requestPermissions();
+          }
+        } catch (e) {
+          console.warn("Camera permission request failed:", e);
+        }
+
+        // Add a small delay between dialogs to prevent the OS from blocking the second one
+        await new Promise(resolve => setTimeout(resolve, 800));
+
+        // Request Storage Permissions
+        try {
+          const fsStatus = await Filesystem.checkPermissions();
+          if (fsStatus.publicStorage !== 'granted') {
+            await Filesystem.requestPermissions();
+          }
         } catch (e) {
           console.warn("Storage permission request failed:", e);
         }
@@ -311,7 +326,7 @@ export default function App() {
   };
 
   return (
-    <div className={`min-h-screen font-sans transition-colors duration-300 ${isDarkMode ? 'bg-zinc-950 text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
+    <div className={`min-h-screen pb-[env(safe-area-inset-bottom)] font-sans transition-colors duration-300 ${isDarkMode ? 'bg-zinc-950 text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
       {/* Permission Modal */}
       {showPermissionModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
@@ -385,7 +400,7 @@ export default function App() {
       )}
 
       {/* Header */}
-      <header className={`border-b px-6 py-4 flex items-center justify-between sticky top-0 z-50 backdrop-blur-md ${isDarkMode ? 'bg-zinc-950/80 border-slate-800/80 shadow-[0_4px_30px_rgba(0,0,0,0.5)]' : 'bg-white/80 border-slate-200'}`}>
+      <header className={`border-b px-6 pt-[calc(1rem+env(safe-area-inset-top))] pb-4 flex items-center justify-between sticky top-0 z-50 backdrop-blur-md ${isDarkMode ? 'bg-zinc-950/80 border-slate-800/80 shadow-[0_4px_30px_rgba(0,0,0,0.5)]' : 'bg-white/80 border-slate-200'}`}>
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-xl shadow-lg shadow-emerald-500/20 flex items-center justify-center text-white p-2">
             <QrCode className="w-full h-full" strokeWidth={2.5} />
