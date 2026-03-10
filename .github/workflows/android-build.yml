@@ -35,20 +35,31 @@ jobs:
 
       - name: Initialize Capacitor Android
         run: |
-          npx cap add android
+          npx cap add android || true
           npx cap sync android
 
       - name: Force SDK 21 Configuration
         run: |
-          # Patch variables.gradle to ensure minSdk is 21
-          # Capacitor's default is often higher, so we explicitly force it.
-          if [ -f "android/variables.gradle" ]; then
-            sed -i 's/minSdkVersion = .*/minSdkVersion = 21/g' android/variables.gradle
-          fi
-          # Also ensure it's set in build.gradle just in case
-          if [ -f "android/app/build.gradle" ]; then
-            sed -i 's/minSdkVersion [0-9]*/minSdkVersion 21/g' android/app/build.gradle
-          fi
+          # Use a more robust way to set SDKs in variables.gradle
+          cat > android/variables.gradle <<EOF
+          ext {
+              minSdkVersion = 21
+              compileSdkVersion = 34
+              targetSdkVersion = 34
+              androidxActivityVersion = '1.8.0'
+              androidxAppCompatVersion = '1.6.1'
+              androidxCoordinatorLayoutVersion = '1.2.0'
+              androidxCoreVersion = '1.12.0'
+              androidxFragmentVersion = '1.6.2'
+              junitVersion = '4.13.2'
+              androidxJunitVersion = '1.1.5'
+              androidxEspressoCoreVersion = '3.5.1'
+              cordovaAndroidVersion = '10.1.1'
+          }
+          EOF
+          
+          # Ensure app/build.gradle also reflects this
+          sed -i 's/minSdkVersion [0-9]*/minSdkVersion 21/g' android/app/build.gradle || true
 
       - name: Build APK (Debug)
         run: |
