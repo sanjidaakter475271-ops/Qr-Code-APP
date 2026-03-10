@@ -74,24 +74,34 @@ const CORNER_DOT_TYPES = [
 ];
 
 export default function App() {
-  const [selectedType, setSelectedType] = useState("link");
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  // Persistence Helper
+  const initial = (() => {
+    try {
+      const saved = localStorage.getItem("nazu_qr_app_state");
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  })();
+
+  const [selectedType, setSelectedType] = useState(initial.selectedType || "link");
+  const [isDarkMode, setIsDarkMode] = useState(initial.isDarkMode ?? false);
 
   // Content States
-  const [linkUrl, setLinkUrl] = useState("https://facebook.com");
-  const [textContent, setTextContent] = useState("");
-  const [emailTo, setEmailTo] = useState("");
-  const [emailSubj, setEmailSubj] = useState("");
-  const [emailBody, setEmailBody] = useState("");
-  const [phoneNum, setPhoneNum] = useState("");
-  const [smsNum, setSmsNum] = useState("");
-  const [smsBody, setSmsBody] = useState("");
-  const [wifiSsid, setWifiSsid] = useState("");
-  const [wifiPass, setWifiPass] = useState("");
-  const [wifiEnc, setWifiEnc] = useState("WPA");
-  const [wifiHidden, setWifiHidden] = useState(false);
+  const [linkUrl, setLinkUrl] = useState(initial.linkUrl ?? "https://facebook.com");
+  const [textContent, setTextContent] = useState(initial.textContent ?? "");
+  const [emailTo, setEmailTo] = useState(initial.emailTo ?? "");
+  const [emailSubj, setEmailSubj] = useState(initial.emailSubj ?? "");
+  const [emailBody, setEmailBody] = useState(initial.emailBody ?? "");
+  const [phoneNum, setPhoneNum] = useState(initial.phoneNum ?? "");
+  const [smsNum, setSmsNum] = useState(initial.smsNum ?? "");
+  const [smsBody, setSmsBody] = useState(initial.smsBody ?? "");
+  const [wifiSsid, setWifiSsid] = useState(initial.wifiSsid ?? "");
+  const [wifiPass, setWifiPass] = useState(initial.wifiPass ?? "");
+  const [wifiEnc, setWifiEnc] = useState(initial.wifiEnc ?? "WPA");
+  const [wifiHidden, setWifiHidden] = useState(initial.wifiHidden ?? false);
 
-  const [vcard, setVcard] = useState({
+  const [vcard, setVcard] = useState(initial.vcard ?? {
     firstName: "",
     lastName: "",
     phone: "",
@@ -160,27 +170,27 @@ export default function App() {
   ]);
 
   // Design state
-  const [activeDesignTab, setActiveDesignTab] = useState("frame");
-  const [frameStyle, setFrameStyle] = useState("bottom-block");
-  const [framePhrase, setFramePhrase] = useState("SCAN ME");
-  const [frameFont, setFrameFont] = useState("'Outfit', sans-serif");
-  const [frameColor, setFrameColor] = useState("#000000");
+  const [activeDesignTab, setActiveDesignTab] = useState(initial.activeDesignTab || "frame");
+  const [frameStyle, setFrameStyle] = useState(initial.frameStyle || "bottom-block");
+  const [framePhrase, setFramePhrase] = useState(initial.framePhrase || "SCAN ME");
+  const [frameFont, setFrameFont] = useState(initial.frameFont || "'Outfit', sans-serif");
+  const [frameColor, setFrameColor] = useState(initial.frameColor || "#000000");
 
   // Shape & Color state
-  const [qrFgColor, setQrFgColor] = useState("#000000");
-  const [qrBgColor, setQrBgColor] = useState("#ffffff");
-  const [dotsType, setDotsType] = useState<DotType>("square");
+  const [qrFgColor, setQrFgColor] = useState(initial.qrFgColor || "#000000");
+  const [qrBgColor, setQrBgColor] = useState(initial.qrBgColor || "#ffffff");
+  const [dotsType, setDotsType] = useState<DotType>(initial.dotsType || "square");
   const [cornersSquareType, setCornersSquareType] =
-    useState<CornerSquareType>("square");
-  const [cornersDotType, setCornersDotType] = useState<CornerDotType>("square");
-  const [isGradient, setIsGradient] = useState(false);
-  const [logo, setLogo] = useState<string | null>(null);
-  const [logoSize, setLogoSize] = useState(0.4);
-  const [logoBgImage, setLogoBgImage] = useState<string | null>(null);
-  const [logoBgSize, setLogoBgSize] = useState(0.45);
-  const [logoBgOpacity, setLogoBgOpacity] = useState(1);
-  const [logoMargin, setLogoMargin] = useState(10);
-  const [downloadFormat, setDownloadFormat] = useState<"png" | "jpg" | "pdf">("png");
+    useState<CornerSquareType>(initial.cornersSquareType || "square");
+  const [cornersDotType, setCornersDotType] = useState<CornerDotType>(initial.cornersDotType || "square");
+  const [isGradient, setIsGradient] = useState(initial.isGradient ?? false);
+  const [logo, setLogo] = useState<string | null>(initial.logo || null);
+  const [logoSize, setLogoSize] = useState(initial.logoSize ?? 0.4);
+  const [logoBgImage, setLogoBgImage] = useState<string | null>(initial.logoBgImage || null);
+  const [logoBgSize, setLogoBgSize] = useState(initial.logoBgSize ?? 0.45);
+  const [logoBgOpacity, setLogoBgOpacity] = useState(initial.logoBgOpacity ?? 1);
+  const [logoMargin, setLogoMargin] = useState(initial.logoMargin ?? 10);
+  const [downloadFormat, setDownloadFormat] = useState<"png" | "jpg" | "pdf">(initial.downloadFormat || "png");
 
   // Permission & Settings state
   const [showPermissionModal, setShowPermissionModal] = useState(false);
@@ -194,6 +204,33 @@ export default function App() {
       setShowPermissionModal(true);
     }
   }, []);
+
+  // Sync state to local storage for persistence
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const stateToSave = {
+        selectedType, isDarkMode, linkUrl, textContent, emailTo, emailSubj,
+        emailBody, phoneNum, smsNum, smsBody, wifiSsid, wifiPass, wifiEnc,
+        wifiHidden, vcard, frameStyle, framePhrase, frameFont, frameColor,
+        qrFgColor, qrBgColor, dotsType, cornersSquareType, cornersDotType,
+        isGradient, logo, logoSize, logoBgImage, logoBgSize, logoBgOpacity,
+        logoMargin, downloadFormat, activeDesignTab
+      };
+      try {
+        localStorage.setItem("nazu_qr_app_state", JSON.stringify(stateToSave));
+      } catch (e) {
+        console.warn("Failed to save app state to localStorage (likely space limit):", e);
+      }
+    }, 1000); // 1s debounce to avoid excessive writes
+    return () => clearTimeout(timer);
+  }, [
+    selectedType, isDarkMode, linkUrl, textContent, emailTo, emailSubj,
+    emailBody, phoneNum, smsNum, smsBody, wifiSsid, wifiPass, wifiEnc,
+    wifiHidden, vcard, frameStyle, framePhrase, frameFont, frameColor,
+    qrFgColor, qrBgColor, dotsType, cornersSquareType, cornersDotType,
+    isGradient, logo, logoSize, logoBgImage, logoBgSize, logoBgOpacity,
+    logoMargin, downloadFormat, activeDesignTab
+  ]);
 
   const handleGrantPermissions = async () => {
     try {
@@ -2031,6 +2068,43 @@ export default function App() {
                   </div>
                   <span className="text-[10px] text-zinc-600 font-mono">Build #774</span>
                 </div>
+              </div>
+
+              <div className="pt-6 border-t border-zinc-800/50">
+                <span className={`text-xs font-bold uppercase tracking-widest mb-4 block ${isDarkMode ? 'text-zinc-600' : 'text-slate-400'}`}>
+                  Data Management
+                </span>
+
+                <div className={`p-4 rounded-2xl border mb-4 flex items-center justify-between transition-all ${isDarkMode ? 'bg-emerald-500/5 border-emerald-500/10' : 'bg-emerald-50 border-emerald-100'}`}>
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center">
+                      <ShieldCheck size={18} className="text-emerald-500" />
+                    </div>
+                    <div>
+                      <p className={`text-sm font-bold ${isDarkMode ? 'text-emerald-400' : 'text-emerald-700'}`}>Caching System Active</p>
+                      <p className={`text-[10px] opacity-70 ${isDarkMode ? 'text-emerald-500' : 'text-emerald-600'}`}>Auto-saving your progress & settings</p>
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => {
+                    if (window.confirm("Reset all settings and clear cache? Your current design will be lost.")) {
+                      localStorage.removeItem("nazu_qr_app_state");
+                      localStorage.removeItem("nazu_qr_save_folder");
+                      localStorage.removeItem("nazu_qr_custom_folder");
+                      localStorage.removeItem("nazu_permissions_granted");
+                      window.location.reload();
+                    }
+                  }}
+                  className={`w-full py-4 rounded-2xl border-2 flex items-center justify-center gap-2 transition-all font-bold text-sm ${isDarkMode
+                    ? 'border-red-500/20 bg-red-500/5 text-red-400 hover:bg-red-500/10 hover:border-red-500/40'
+                    : 'border-red-100 bg-red-50 text-red-600 hover:bg-red-100 hover:border-red-200'
+                    }`}
+                >
+                  <X size={18} />
+                  Reset to Factory Settings
+                </button>
               </div>
             </div>
 
