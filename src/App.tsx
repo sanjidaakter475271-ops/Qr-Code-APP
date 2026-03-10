@@ -46,6 +46,9 @@ const FRAME_STYLES = [
   { id: "side-arrows", label: "Side Arrows" },
   { id: "top-pill-overlap", label: "Top Pill Overlap" },
   { id: "top-block-rounded", label: "Top Rounded" },
+  { id: "polaroid", label: "Polaroid" },
+  { id: "neon-border", label: "Neon Border" },
+  { id: "floating-badge", label: "Floating Badge" }
 ];
 
 const DOT_TYPES = [
@@ -158,7 +161,7 @@ export default function App() {
   const [activeDesignTab, setActiveDesignTab] = useState("frame");
   const [frameStyle, setFrameStyle] = useState("bottom-block");
   const [framePhrase, setFramePhrase] = useState("SCAN ME");
-  const [frameFont, setFrameFont] = useState("'Kalam', cursive");
+  const [frameFont, setFrameFont] = useState("'Outfit', sans-serif");
   const [frameColor, setFrameColor] = useState("#000000");
 
   // Shape & Color state
@@ -300,7 +303,7 @@ export default function App() {
   };
 
   return (
-    <div className={`min-h-screen font-sans transition-colors duration-300 ${isDarkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
+    <div className={`min-h-screen font-sans transition-colors duration-300 ${isDarkMode ? 'bg-zinc-950 text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
       {/* Permission Modal */}
       {showPermissionModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
@@ -373,7 +376,7 @@ export default function App() {
       )}
 
       {/* Header */}
-      <header className={`border-b px-6 py-4 flex items-center justify-between sticky top-0 z-50 backdrop-blur-md ${isDarkMode ? 'bg-slate-900/80 border-slate-800' : 'bg-white/80 border-slate-200'}`}>
+      <header className={`border-b px-6 py-4 flex items-center justify-between sticky top-0 z-50 backdrop-blur-md ${isDarkMode ? 'bg-zinc-950/80 border-slate-800/80 shadow-[0_4px_30px_rgba(0,0,0,0.5)]' : 'bg-white/80 border-slate-200'}`}>
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-xl shadow-lg shadow-emerald-500/20 flex items-center justify-center text-white p-2">
             <QrCode className="w-full h-full" strokeWidth={2.5} />
@@ -397,7 +400,7 @@ export default function App() {
         {/* Left Column - Controls */}
         <div className="lg:col-span-2 space-y-6">
           {/* QR Types */}
-          <div className="rounded-xl shadow-sm border p-6 transition-colors bg-white border-slate-200">
+          <div className={`rounded-xl shadow-lg border p-6 transition-colors ${isDarkMode ? 'bg-zinc-900 border-zinc-800 shadow-black/40' : 'bg-white border-slate-200 shadow-sm'}`}>
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
               {QR_TYPES.map((type) => {
                 const Icon = type.icon;
@@ -408,7 +411,9 @@ export default function App() {
                     onClick={() => setSelectedType(type.id)}
                     className={`flex flex-col items-center justify-center gap-2 p-3 rounded-lg border transition-all duration-200 ${isSelected
                       ? "border-emerald-500 bg-emerald-500/10 text-emerald-500 shadow-sm"
-                      : "border-slate-100 hover:border-slate-200 text-slate-600 hover:bg-slate-50"
+                      : isDarkMode
+                        ? "border-zinc-800 hover:border-zinc-600 text-zinc-400 hover:bg-zinc-800/50 hover:text-zinc-200"
+                        : "border-slate-100 hover:border-slate-200 text-slate-600 hover:bg-slate-50"
                       }`}
                   >
                     <Icon size={20} strokeWidth={isSelected ? 2.5 : 2} />
@@ -420,8 +425,8 @@ export default function App() {
           </div>
 
           {/* Step 1: Content */}
-          <div className="rounded-xl shadow-sm border p-6 transition-colors bg-white border-slate-200">
-            <h2 className="text-lg font-semibold mb-6 flex items-center gap-3 text-slate-800">
+          <div className={`rounded-xl shadow-lg border p-6 transition-colors ${isDarkMode ? 'bg-zinc-900 border-zinc-800 shadow-black/40' : 'bg-white border-slate-200 shadow-sm'}`}>
+            <h2 className={`text-lg font-semibold mb-6 flex items-center gap-3 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
               <span className={`${isDarkMode ? 'bg-emerald-500 text-slate-900' : 'bg-slate-800 text-white'} w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold`}>
                 1
               </span>
@@ -750,7 +755,7 @@ export default function App() {
           </div>
 
           {/* Step 2: Design */}
-          <div className={`rounded-xl shadow-sm border p-6 transition-colors ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+          <div className={`rounded-xl shadow-lg border p-6 transition-colors ${isDarkMode ? 'bg-zinc-900 border-zinc-800 shadow-black/40' : 'bg-white border-slate-200 shadow-sm'}`}>
             <h2 className={`text-lg font-semibold mb-6 flex items-center gap-3 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
               <span className={`${isDarkMode ? 'bg-emerald-500 text-slate-900' : 'bg-slate-800 text-white'} w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold`}>
                 2
@@ -823,10 +828,15 @@ export default function App() {
                       disabled={frameStyle === "none"}
                       className={`${inputClass} disabled:opacity-50 disabled:cursor-not-allowed`}
                     >
-                      <option value="sans-serif">Sans-Serif</option>
-                      <option value="serif">Serif</option>
-                      <option value="monospace">Monospace</option>
-                      <option value="'Kalam', cursive">Handwritten</option>
+                      <option value="'Outfit', sans-serif">Outfit</option>
+                      <option value="'Montserrat', sans-serif">Montserrat</option>
+                      <option value="'Space Grotesk', sans-serif">Space Grotesk</option>
+                      <option value="'Kalam', cursive">Kalam (Handwritten)</option>
+                      <option value="'Pacifico', cursive">Pacifico</option>
+                      <option value="'Dancing Script', cursive">Dancing Script</option>
+                      <option value="'Bebas Neue', cursive">Bebas Neue</option>
+                      <option value="'Playfair Display', serif">Playfair Display</option>
+                      <option value="system-ui, sans-serif">System Default</option>
                     </select>
                   </div>
                   <div className="space-y-2 col-span-1 md:col-span-2">
@@ -1168,7 +1178,7 @@ export default function App() {
 
         {/* Right Column - Preview & Download */}
         <div className="space-y-6">
-          <div className={`rounded-xl shadow-sm border p-6 flex flex-col items-center sticky top-24 transition-colors ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+          <div className={`rounded-xl shadow-lg border p-6 flex flex-col items-center sticky top-24 transition-colors ${isDarkMode ? 'bg-zinc-900 border-zinc-800 shadow-black/40' : 'bg-white border-slate-200 shadow-sm'}`}>
             <h2 className={`text-lg font-semibold mb-6 flex items-center gap-3 self-start ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
               <span className={`${isDarkMode ? 'bg-emerald-500 text-slate-900' : 'bg-slate-800 text-white'} w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold`}>
                 3
@@ -1177,7 +1187,7 @@ export default function App() {
             </h2>
 
             {/* QR Preview Area */}
-            <div className={`p-8 rounded-2xl mb-8 w-full flex items-center justify-center min-h-[400px] transition-colors ${isDarkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-100'}`}>
+            <div className={`p-8 rounded-2xl mb-8 w-full flex items-center justify-center min-h-[400px] transition-colors ${isDarkMode ? 'bg-zinc-950 shadow-inner border border-zinc-800/60' : 'bg-slate-50 border border-slate-100'}`}>
               <div ref={qrRef} className="flex items-center justify-center">
                 {(() => {
                   const qrSize = 200;
@@ -1412,24 +1422,62 @@ export default function App() {
                             <div
                               className="absolute -top-2 w-6 h-4 rounded-t-full"
                               style={{ backgroundColor: frameColor }}
-                            />
+                            ></div>
+                            <div className="absolute -top-1 w-3 h-2 bg-white/40 rounded-full" />
                           </div>
                           <div
-                            className="flex flex-col rounded-xl overflow-hidden relative z-10"
-                            style={{
-                              border: `4px solid ${frameColor}`,
-                              backgroundColor: frameColor,
-                              boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
-                            }}
+                            className="bg-white p-4 rounded-xl flex flex-col pt-6"
+                            style={{ border: `4px solid ${frameColor}`, boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
                           >
-                            <div className="bg-white p-4 pt-6">{qrWrapper}</div>
-                            <div className="h-12 flex items-center justify-center">
-                              {textElement("#ffffff")}
+                            {qrWrapper}
+                            <div className="mt-4 border-t-2 border-dashed pt-4 flex justify-center items-center" style={{ borderColor: `${frameColor}40` }}>
+                              {textElement(frameColor)}
                             </div>
                           </div>
                         </div>
                       );
 
+                    case "polaroid":
+                      return (
+                        <div
+                          className="bg-white p-3 pb-12 rounded shadow-2xl flex flex-col relative"
+                        >
+                          {qrWrapper}
+                          <div className="absolute bottom-2 left-0 w-full flex justify-center h-10 items-center">
+                            {textElement("#333333")}
+                          </div>
+                        </div>
+                      );
+
+                    case "neon-border":
+                      return (
+                        <div
+                          className="p-4 rounded-xl flex flex-col items-center"
+                          style={{
+                            border: `4px solid ${frameColor}`,
+                            boxShadow: `0 0 15px ${frameColor}90, inset 0 0 10px ${frameColor}60`,
+                            backgroundColor: isDarkMode ? '#0f172a' : '#f8fafc'
+                          }}
+                        >
+                          <div className="bg-white p-2 mb-3 rounded-lg shadow-inner">{qrWrapper}</div>
+                          <div className="h-8 flex items-center justify-center filter drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">
+                            {textElement(frameColor)}
+                          </div>
+                        </div>
+                      );
+
+                    case "floating-badge":
+                      return (
+                        <div className="relative pt-6 px-4 pb-4 bg-white rounded-3xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.15)] border border-slate-100">
+                          <div
+                            className="absolute -top-4 left-1/2 -translate-x-1/2 px-6 py-2 rounded-full shadow-lg z-10 whitespace-nowrap border-2 border-white"
+                            style={{ backgroundColor: frameColor }}
+                          >
+                            {textElement("#ffffff")}
+                          </div>
+                          <div className="pt-2">{qrWrapper}</div>
+                        </div>
+                      );
                     case "bag":
                       return (
                         <div className="relative pt-12 w-full max-w-[280px]">
@@ -1786,8 +1834,8 @@ export default function App() {
               High quality PNG format. No signup required.
             </p>
           </div>
-        </div>
-      </main>
-    </div>
+        </div >
+      </main >
+    </div >
   );
 }
