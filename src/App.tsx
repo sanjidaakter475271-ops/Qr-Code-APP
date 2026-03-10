@@ -1349,7 +1349,10 @@ export default function App() {
 
             {/* QR Preview Area */}
             <div className={`p-8 rounded-2xl mb-8 w-full flex items-center justify-center min-h-[400px] transition-colors ${isDarkMode ? 'bg-zinc-800 shadow-inner border border-zinc-700' : 'bg-slate-50 border border-slate-100'}`}>
-              <div ref={qrRef} className="flex items-center justify-center">
+              <div
+                ref={qrRef}
+                className="bg-white p-12 flex items-center justify-center rounded-xl shadow-sm overflow-visible"
+              >
                 {(() => {
                   const qrSize = 200;
                   const qrWrapper = (
