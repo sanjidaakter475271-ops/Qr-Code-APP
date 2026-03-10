@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import html2canvas from "html2canvas";
+import * as htmlToImage from "html-to-image";
 import StyledQRCode from "./components/StyledQRCode";
 import ColorPicker from "./components/ColorPicker";
 import type { DotType, CornerSquareType, CornerDotType } from "qr-code-styling";
@@ -296,17 +296,16 @@ export default function App() {
     console.log("Generating QR image...");
 
     try {
-      const scale = 4;
-      const canvas = await html2canvas(qrRef.current, {
-        backgroundColor: "#ffffff",
-        scale: scale,
-        useCORS: true,
-        allowTaint: true,
-      });
-
       const fileName = `qrcode_${Date.now()}`;
       const fileExt = downloadFormat === "jpg" ? "jpg" : "png";
       const mimeType = downloadFormat === "jpg" ? "image/jpeg" : "image/png";
+
+      const scale = 4;
+      // html-to-image natively supports modern CSS features like Tailwind's oklch colors
+      const canvas = await htmlToImage.toCanvas(qrRef.current, {
+        backgroundColor: "#ffffff",
+        pixelRatio: scale,
+      });
 
       if (downloadFormat === "pdf") {
         const { jsPDF } = await import("jspdf");
